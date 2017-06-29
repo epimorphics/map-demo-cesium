@@ -2,6 +2,7 @@ var HtmlPlugin = require('html-webpack-plugin');
 
 module.exports = {
     entry: "./app.js",
+    target: "node",
     output: {
         path: __dirname + '/public',
         filename: "bundle.js",
