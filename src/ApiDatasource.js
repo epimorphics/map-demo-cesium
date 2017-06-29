@@ -346,3 +346,4 @@ function loadData(timecodes) {
 }
 
 module.exports.loadData = loadData;
+module.exports.ApiDataSource = ApiDataSource;
