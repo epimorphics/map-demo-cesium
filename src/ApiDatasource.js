@@ -13,7 +13,7 @@ function ApiDataSource() {
   this._entityCollection = new EntityCollection();
   this._seriesNames = [];
   this._seriesToDisplay = undefined;
-  this._heightScale = 100000;
+  this._heightScale = 150000;
   this._entityCluster = new EntityCluster();
   this.update = function (time) {
     var start = moment(time.toString());
@@ -232,6 +232,7 @@ ApiDataSource.prototype.load = function(data) {
     if (!Cesium.defined(data)) {
         throw new Cesium.DeveloperError('data is required.');
     }
+    console.log(data);
     //>>includeEnd('debug');
 
     //Clear out any data that might already exist.
@@ -283,7 +284,7 @@ ApiDataSource.prototype.load = function(data) {
                 continue;
             }
 
-            var color = Cesium.Color.fromHsl((0.6 - (height * 0.5)), 1.0, 0.5);
+            var color = Cesium.Color.fromHsl((0.6 - (height * 0.1)), 1.0, 0.5);
             var surfacePosition = Cesium.Cartesian3.fromDegrees(longitude, latitude, 0);
             var heightPosition = Cesium.Cartesian3.fromDegrees(longitude, latitude, height * heightScale);
 
@@ -319,8 +320,6 @@ ApiDataSource.prototype._setLoading = function(isLoading) {
         this._loading.raiseEvent(this, isLoading);
     }
 };
-
-
 
 //Now that we've defined our own DataSource, we can use it to load
 //any JSON data formatted for WebGL Globe.

@@ -1,6 +1,7 @@
 require('cesium/Source/Widgets/widgets.css');
 
 var ApiDataSource = require('./src/ApiDatasource.js').ApiDataSource;
+var APIHeatmap = require('./src/APIHeatmap.js');
 var Clock = require('cesium/Source/Core/Clock');
 var JulianDate = require('cesium/Source/Core/JulianDate');
 var ClockRange = require('cesium/Source/Core/ClockRange');
@@ -16,7 +17,7 @@ var viewer = new Viewer('cesiumContainer', {
   vrButton : true,
   clock : new Clock({
     startTime : JulianDate.fromIso8601("2017-03-01"),
-    currentTime : JulianDate.fromIso8601("2017-03-01"),
+    currentTime : JulianDate.fromIso8601("2017-03-08"),
     stopTime : JulianDate.fromIso8601("2017-05-20"),
     clockRange : ClockRange.LOOP_STOP,
     multiplier: 3800,
@@ -24,13 +25,22 @@ var viewer = new Viewer('cesiumContainer', {
   })
 });
 
+
+//console.log(CesiumHeatmap.create(viewer, {north: 40, east: 50, south: 0, west: 0}));
+
 var cesiumTerrainProviderMeshes = new CesiumTerrainProvider({
     url: 'https://assets.agi.com/stk-terrain/world',
     requestWaterMask: true,
     requestVertexNormals: true
 });
 
+//var hm = new APIHeatmap(viewer);
+//hm.setData(0, 1, [{x: 1000, y: 500, value: 0.5}]);
+/*setInterval(() => {
+  hm.onTick(viewer.clock.currentTime);
+}, 1000);*/
+
 var center = Cartesian3.fromDegrees(-2, 52.0);
-// viewer.terrainProvider = cesiumTerrainProviderMeshes;
+viewer.terrainProvider = cesiumTerrainProviderMeshes;
 viewer.camera.lookAt(center, new Cartesian3(0, 0, 1000000.0));
 viewer.dataSources.add(new ApiDataSource());
