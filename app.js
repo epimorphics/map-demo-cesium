@@ -1,6 +1,8 @@
 require('cesium/Source/Widgets/widgets.css');
 
 var ApiDataSource = require('./src/ApiDatasource.js').ApiDataSource;
+var getHeatEntities = require('./src/ApiDatasource.js').getHeatEntities;
+var getGraphEntities = require('./src/ApiDatasource.js').getGraphEntities;
 var ApiHeatmap = require('./src/ApiHeatmap.js').ApiHeatmap;
 var Clock = require('cesium/Source/Core/Clock');
 var Color = require('cesium/Source/Core/Color');
@@ -44,5 +46,5 @@ var cesiumTerrainProviderMeshes = new CesiumTerrainProvider({
 var center = Cartesian3.fromDegrees(-2, 52.0);
 viewer.terrainProvider = cesiumTerrainProviderMeshes;
 viewer.camera.lookAt(center, new Cartesian3(0, 0, 1000000.0));
-viewer.dataSources.add(new ApiDataSource());
-viewer.dataSources.add(new ApiHeatmap());
+viewer.dataSources.add(new ApiDataSource((date) => `http://192.168.1.131:3000/api/globe/readings/${date}`, getGraphEntities));
+viewer.dataSources.add(new ApiDataSource((date) => `http://192.168.1.131:3000/api/globe/levels/${date}`, getHeatEntities));
