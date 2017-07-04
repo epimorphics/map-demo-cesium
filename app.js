@@ -1,8 +1,9 @@
 require('cesium/Source/Widgets/widgets.css');
 
 var ApiDataSource = require('./src/ApiDatasource.js').ApiDataSource;
-var APIHeatmap = require('./src/APIHeatmap.js');
+var ApiHeatmap = require('./src/ApiHeatmap.js').ApiHeatmap;
 var Clock = require('cesium/Source/Core/Clock');
+var Color = require('cesium/Source/Core/Color');
 var JulianDate = require('cesium/Source/Core/JulianDate');
 var ClockRange = require('cesium/Source/Core/ClockRange');
 var ClockStep = require('cesium/Source/Core/ClockStep');
@@ -44,3 +45,4 @@ var center = Cartesian3.fromDegrees(-2, 52.0);
 viewer.terrainProvider = cesiumTerrainProviderMeshes;
 viewer.camera.lookAt(center, new Cartesian3(0, 0, 1000000.0));
 viewer.dataSources.add(new ApiDataSource());
+viewer.dataSources.add(new ApiHeatmap());

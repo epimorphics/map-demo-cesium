@@ -4,7 +4,7 @@ const EntityCluster = require('cesium/Source/DataSources/EntityCluster.js')
 const Cesium = require('cesium/Source/Cesium.js');
 const moment = require('moment');
 
-function ApiDataSource() {
+function ApiHeatmap() {
   this._name = 'dataSource';
   this._changed = new CesiumEvent();
   this._error = new CesiumEvent();
@@ -21,14 +21,14 @@ function ApiDataSource() {
     var datestr = start.set('minutes', quaters * 15).format('YYYY-MM-DD/HH-mm');
     if (this.currentUrl !== datestr) {
       this.currentUrl = datestr;
-      return this.loadUrl(`http://192.168.1.131:3000/api/globe/readings/${datestr}`)
+      return this.loadUrl(`http://192.168.1.131:3000/api/globe/levels/${datestr}`)
         .then(() => true);
     }
     return true;
   };
 }
 
-Object.defineProperties(ApiDataSource.prototype, {
+Object.defineProperties(ApiHeatmap.prototype, {
   //The below properties must be implemented by all DataSource instances
 
   /**
@@ -194,7 +194,7 @@ Object.defineProperties(ApiDataSource.prototype, {
  * @param {Object} url The url to be processed.
  * @returns {Promise} a promise that will resolve when the GeoJSON is loaded.
  */
-ApiDataSource.prototype.loadUrl = function(url) {
+ApiHeatmap.prototype.loadUrl = function(url) {
     if (!Cesium.defined(url)) {
         throw new Cesium.DeveloperError('url is required.');
     }
@@ -227,11 +227,12 @@ ApiDataSource.prototype.loadUrl = function(url) {
  * Loads the provided data, replacing any existing data.
  * @param {Object} data The object to be processed.
  */
-ApiDataSource.prototype.load = function(data) {
+ApiHeatmap.prototype.load = function(data) {
     //>>includeStart('debug', pragmas.debug);
     if (!Cesium.defined(data)) {
         throw new Cesium.DeveloperError('data is required.');
     }
+    console.log(data);
     //>>includeEnd('debug');
 
     //Clear out any data that might already exist.
@@ -283,7 +284,7 @@ ApiDataSource.prototype.load = function(data) {
                 continue;
             }
 
-            var color = Cesium.Color.fromHsl((0.6 - (height * 0.1)), 1.0, 0.5);
+  /*          var color = Cesium.Color.fromHsl((0.6 - (height * 0.1)), 1.0, 0.5);
             var surfacePosition = Cesium.Cartesian3.fromDegrees(longitude, latitude, 0);
             var heightPosition = Cesium.Cartesian3.fromDegrees(longitude, latitude, height * heightScale);
 
@@ -293,13 +294,20 @@ ApiDataSource.prototype.load = function(data) {
             polyline.width = new Cesium.ConstantProperty(2);
             polyline.followSurface = new Cesium.ConstantProperty(false);
             polyline.positions = new Cesium.ConstantProperty([surfacePosition, heightPosition]);
+*/
+            var ellipse = new Cesium.EllipseGraphics({
+                  semiMinorAxis : 10000,
+                  semiMajorAxis : 10000,
+                  material : Cesium.Color.fromHsl(0.6 * (1.0 - height), 1.0, 0.5, 0.5)
+            })
 
             //The polyline instance itself needs to be on an entity.
             var entity = new Cesium.Entity({
                 id : seriesName + ' index ' + i.toString(),
                 show : show,
-                polyline : polyline,
-
+                ellipse : ellipse,
+                position : new Cesium.Cartesian3.fromDegrees(longitude, latitude),
+                //polyline : polyline,
                 seriesName : seriesName //Custom property to indicate series name
             });
 
@@ -314,7 +322,7 @@ ApiDataSource.prototype.load = function(data) {
     this._setLoading(false);
 };
 
-ApiDataSource.prototype._setLoading = function(isLoading) {
+ApiHeatmap.prototype._setLoading = function(isLoading) {
     if (this._isLoading !== isLoading) {
         this._isLoading = isLoading;
         this._loading.raiseEvent(this, isLoading);
@@ -324,7 +332,7 @@ ApiDataSource.prototype._setLoading = function(isLoading) {
 //Now that we've defined our own DataSource, we can use it to load
 //any JSON data formatted for WebGL Globe.
 function loadData(timecodes) {
-    var dataSource = new ApiDataSource();
+    var dataSource = new ApiHeatmap();
     for (var i = 0; i < timecodes.length; i++) {
         dataSource.loadUrl(`http://localhost:3000/api/globe/${timecodes[i].date}/${timecodes[i].time}`).then(function() {
 
@@ -345,4 +353,4 @@ function loadData(timecodes) {
 }
 
 module.exports.loadData = loadData;
-module.exports.ApiDataSource = ApiDataSource;
+module.exports.ApiHeatmap = ApiHeatmap;
