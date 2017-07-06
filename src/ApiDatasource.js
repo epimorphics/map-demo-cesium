@@ -1,7 +1,7 @@
-const CesiumEvent = require('cesium/Source/Core/Event.js');
-const EntityCollection = require('cesium/Source/DataSources/EntityCollection.js');
-const EntityCluster = require('cesium/Source/DataSources/EntityCluster.js');
-const Cesium = require('cesium/Source/Cesium.js');
+const CesiumEvent = require('cesium/Source/Core/Event');
+const EntityCollection = require('cesium/Source/DataSources/EntityCollection');
+const EntityCluster = require('cesium/Source/DataSources/EntityCluster');
+const Cesium = require('cesium/Source/Cesium');
 const moment = require('moment');
 
 function getGraphEntities(data) {
@@ -10,19 +10,23 @@ function getGraphEntities(data) {
     if (this.options.color) {
       color = Cesium.Color.fromCssColorString(this.options.color);
     } else {
+      // converts value between 0 and 1 to colour from blue to red
       color = Cesium.Color.fromHsl((0.6 - (point.value * 0.1)), 1.0, 0.5);
     }
+    const long = point.long;
+    const lat = point.lat;
     const surfacePosition =
-      Cesium.Cartesian3.fromDegrees(point.long, point.lat, 0);
+      Cesium.Cartesian3.fromDegrees(long, lat, 0);
     const heightPosition =
-      Cesium.Cartesian3.fromDegrees(point.long, point.lat, point.value * 150000);
+      Cesium.Cartesian3.fromDegrees(long, lat, point.value * 150000);
 
-        // WebGL Globe only contains lines, so that's the only graphics we create.
+    // Create line to be displayed on map
     const polyline = new Cesium.PolylineGraphics();
     polyline.material = new Cesium.ColorMaterialProperty(color);
     polyline.width = new Cesium.ConstantProperty(2);
     polyline.followSurface = new Cesium.ConstantProperty(false);
-    polyline.positions = new Cesium.ConstantProperty([surfacePosition, heightPosition]);
+    polyline.positions =
+      new Cesium.ConstantProperty([surfacePosition, heightPosition]);
 
         // The polyline instance itself needs to be on an entity.
     const entity = new Cesium.Entity({
@@ -38,10 +42,11 @@ function getHeatEntities(data) {
     const ellipse = new Cesium.EllipseGraphics({
       semiMinorAxis: 6000 * point.value,
       semiMajorAxis: 6000 * point.value,
+      // converts value between 0 and 1 to colour from blue to red
       material: Cesium.Color.fromHsl(0.6 * (1.0 - point.value), 1.0, 0.5, 0.8),
     });
 
-      // The polyline instance itself needs to be on an entity.
+      // The polyline instance needs to be on an entity.
     const entity = new Cesium.Entity({
       show: true,
       ellipse,
@@ -67,7 +72,8 @@ function ApiDataSource(api, visualisation, options) {
   this.update = function update(time) {
     const start = moment(time.toString());
     const quarters = Math.round(start.minutes() / 15);
-    const datestr = start.set('minutes', quarters * 15).format('YYYY-MM-DD/HH-mm');
+    const datestr = start.set('minutes', quarters * 15)
+      .format('YYYY-MM-DD/HH-mm');
     if (this.currentUrl !== datestr) {
       this.currentUrl = datestr;
       return this.loadUrl(api(datestr))
@@ -91,7 +97,7 @@ Object.defineProperties(ApiDataSource.prototype, {
     },
   },
   /**
-   * Since WebGL Globe JSON is not time-dynamic, this property is always undefined.
+   * Generates a clock for the start of the data
    * @memberof WebGLGlobeDataSource.prototype
    * @type {DataSourceClock}
    */
@@ -155,42 +161,6 @@ Object.defineProperties(ApiDataSource.prototype, {
   // These properties are specific to this DataSource.
 
   /**
-   * Gets the array of series names.
-   * @memberof WebGLGlobeDataSource.prototype
-   * @type {String[]}
-   */
-  seriesNames: {
-    get() {
-      return this._seriesNames;
-    },
-  },
-  /**
-   * Gets or sets the name of the series to display.  WebGL JSON is designed
-   * so that only one series is viewed at a time.  Valid values are defined
-   * in the seriesNames property.
-   * @memberof WebGLGlobeDataSource.prototype
-   * @type {String}
-   */
-  seriesToDisplay: {
-    get() {
-      return this._seriesToDisplay;
-    },
-    set(value) {
-      this._seriesToDisplay = value;
-
-      // Iterate over all entities and set their show property
-      // to true only if they are part of the current series.
-      const collection = this._entityCollection;
-      const entities = collection.values;
-      collection.suspendEvents();
-      for (let i = 0; i < entities.length; i += 1) {
-        const entity = entities[i];
-        entity.show = value === entity.seriesName;
-      }
-      collection.resumeEvents();
-    },
-  },
-  /**
    * Gets or sets the scale factor applied to the height of each line.
    * @memberof WebGLGlobeDataSource.prototype
    * @type {Number}
@@ -240,7 +210,7 @@ Object.defineProperties(ApiDataSource.prototype, {
 
 
 /**
- * Asynchronously loads the JSON at the provided url, replacing any existing data.
+ * Loads the JSON at the provided url, replacing any existing data.
  * @param {Object} url The url to be processed.
  * @returns {Promise} a promise that will resolve when the JSON is loaded.
  */
@@ -278,11 +248,9 @@ ApiDataSource.prototype.loadUrl = function loadUrl(url) {
  * @param {Object} data The object to be processed.
  */
 ApiDataSource.prototype.load = function load(data) {
-    // >>includeStart('debug', pragmas.debug);
   if (!Cesium.defined(data)) {
     throw new Cesium.DeveloperError('data is required.');
   }
-    // >>includeEnd('debug');
 
     // Clear out any data that might already exist.
   this._setLoading(true);
@@ -291,23 +259,23 @@ ApiDataSource.prototype.load = function load(data) {
 
   const entities = this._entityCollection;
 
-    // It's a good idea to suspend events when making changes to a
-    // large amount of entities.  This will cause events to be batched up
-    // into the minimal amount of function calls and all take place at the
-    // end of processing (when resumeEvents is called).
+  // It's a good idea to suspend events when making changes to a
+  // large amount of entities.  This will cause events to be batched up
+  // into the minimal amount of function calls and all take place at the
+  // end of processing (when resumeEvents is called).
   entities.suspendEvents();
   entities.removeAll();
 
     // Supply the visualsation for this datasource with data from the api
   const entityArr = this.graphVisualisation(data.data);
 
-    // Then add it to EntityCollection
+  // Then add it to EntityCollection
   entityArr.map((entity) => {
     entities.add(entity);
     return null;
   });
 
-    // Once all data is processed, call resumeEvents and raise the changed event.
+  // Once all data is processed, call resumeEvents and raise the changed event.
   entities.resumeEvents();
   this._changed.raiseEvent(this);
   this._setLoading(false);

@@ -30,7 +30,12 @@ const viewer = new Viewer('cesiumContainer', {
 const center = Cartesian3.fromDegrees(-2, 53.5);
 viewer.camera.lookAt(center, new Cartesian3(0, 0, 1000000.0));
 
+const tideModifier = date => `http://192.168.1.131:3000/api/tide/${date}`;
+const rainModifier = date => `http://192.168.1.131:3000/api/readings/${date}`;
+const levelsModifier = date => `http://192.168.1.131:3000/api/levels${date}`;
+
 // Add datasources from api
-viewer.dataSources.add(new ApiDataSource(date => `http://192.168.1.131:3000/api/tide/${date}`, getGraphEntities, { color: 'red' }));
-viewer.dataSources.add(new ApiDataSource(date => `http://192.168.1.131:3000/api/reading/${date}`, getGraphEntities, {}));
-viewer.dataSources.add(new ApiDataSource(date => `http://192.168.1.131:3000/api/levels/${date}`, getHeatEntities));
+viewer.dataSources.add(
+  new ApiDataSource(tideModifier, getGraphEntities, { color: 'red' }));
+viewer.dataSources.add(new ApiDataSource(rainModifier, getGraphEntities, {}));
+viewer.dataSources.add(new ApiDataSource(levelsModifier, getHeatEntities));
