@@ -261,9 +261,9 @@ ApiDataSource.prototype.loadUrl = function(url) {
     return Cesium.when(Cesium.loadJson(url), function(json) {
         return that.load(json, url);
     }).otherwise(function(error) {
-        //Otherwise will catch any errors or exceptions that occur 
-        //during the promise processing. When this happens, 
-        //we raise the error event and reject the promise. 
+        //Otherwise will catch any errors or exceptions that occur
+        //during the promise processing. When this happens,
+        //we raise the error event and reject the promise.
         this._setLoading(false);
         that._error.raiseEvent(that, error);
         return Cesium.when.reject(error);
@@ -290,47 +290,22 @@ ApiDataSource.prototype.load = function(data) {
     var heightScale = this.heightScale;
     var entities = this._entityCollection;
 
-    //It's a good idea to suspend events when making changes to a 
+    //It's a good idea to suspend events when making changes to a
     //large amount of entities.  This will cause events to be batched up
     //into the minimal amount of function calls and all take place at the
     //end of processing (when resumeEvents is called).
     entities.suspendEvents();
     entities.removeAll();
 
-    //WebGL Globe JSON is an array of series, where each series itself is an
-    //array of two items, the first containing the series name and the second
-    //being an array of repeating latitude, longitude, height values.
-    //
-    //Here's a more visual example.
-    //[["series1",[latitude, longitude, height, ... ]
-    // ["series2",[latitude, longitude, height, ... ]]
+    //Supply the visualsation for this datasource with data from the api
+    var entityArr = this.graphVisualisation(data.data);
 
-    // Loop over each series
-    var entityArr = [];
-    for (var x = 0; x < data.length; x++) {
-        var series = data[x];
-        var seriesName = series[0];
-        var coordinates = series[1];
-
-        //Add the name of the series to our list of possible values.
-        this._seriesNames.push(seriesName);
-        //Make the first series the visible one by default
-        var show = x === 0;
-        if (show) {
-            this._seriesToDisplay = seriesName;
-        }
-
-        //Now loop over each coordinate in the series and create
-
-        // our entities from the data.
-        entityArr = this.graphVisualisation(coordinates);
-    }
+    // Then add it to EntityCollection
     entityArr.map((entity) => {
       entities.add(entity);
     })
 
     //Once all data is processed, call resumeEvents and raise the changed event.
-
     entities.resumeEvents();
     this._changed.raiseEvent(this);
     this._setLoading(false);
@@ -343,30 +318,6 @@ ApiDataSource.prototype._setLoading = function(isLoading) {
     }
 };
 
-//Now that we've defined our own DataSource, we can use it to load
-//any JSON data formatted for WebGL Globe.
-function loadData(timecodes) {
-    var dataSource = new ApiDataSource();
-    for (var i = 0; i < timecodes.length; i++) {
-        dataSource.loadUrl(`http://localhost:3000/api/globe/${timecodes[i].date}/${timecodes[i].time}`).then(function() {
-
-            //After the initial load, create buttons to let the user switch among series. 
-            function createSeriesSetter(seriesName) {
-                return function() {
-                    dataSource.seriesToDisplay = seriesName;
-                };
-            }
-
-            for (var i = 0; i < dataSource.seriesNames.length; i++) {
-                var seriesName = dataSource.seriesNames[i];
-                Sandcastle.addToolbarButton(seriesName, createSeriesSetter(seriesName));
-            }
-        });
-    }
-    return dataSource;
-}
-
-module.exports.loadData = loadData;
 module.exports.ApiDataSource = ApiDataSource;
 module.exports.getGraphEntities = getGraphEntities;
 module.exports.getHeatEntities = getHeatEntities;

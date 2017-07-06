@@ -15,14 +15,17 @@ var BuildModuleUrl = require('cesium/Source/Core/buildModuleUrl');
 
 BuildModuleUrl.setBaseUrl('./');
 
+
+// Initialise Cesium Viewer to cesiumContainer element
 var viewer = new Viewer('cesiumContainer', {
   vrButton : true,
+  scene3DOnly: true,
   clock : new Clock({
-    startTime : JulianDate.fromIso8601("2017-03-01"),
-    currentTime : JulianDate.fromIso8601("2017-03-08"),
-    stopTime : JulianDate.fromIso8601("2017-05-20"),
+    startTime : JulianDate.fromIso8601("2017-04-08"),
+    currentTime : JulianDate.fromIso8601("2017-04-08"),
+    stopTime : JulianDate.fromIso8601("2017-04-10"),
     clockRange : ClockRange.LOOP_STOP,
-    multiplier: 3800,
+    multiplier: 1000,
     clockStep : ClockStep.SYSTEM_CLOCK_MULTIPLIER
   })
 });
