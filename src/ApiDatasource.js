@@ -4,21 +4,16 @@ const EntityCluster = require('cesium/Source/DataSources/EntityCluster.js')
 const Cesium = require('cesium/Source/Cesium.js');
 const moment = require('moment');
 
-function getGraphEntities(coordinates) {
-    var entityArr = []
-    for (var i = 0; i < coordinates.length; i += 3) {
-        var latitude = coordinates[i];
-        var longitude = coordinates[i + 1];
-        var height = coordinates[i + 2];
-
-        //Ignore lines of zero height.
-        if(height === 0) {
-            continue;
+function getGraphEntities(data) {
+    return data.map((point) => {
+        var color;
+        if (this.options.color) {
+          color = Cesium.Color.fromCssColorString(this.options.color);
+        } else {
+          color = Cesium.Color.fromHsl((0.6 - (point.value * 0.1)), 1.0, 0.5);
         }
-
-        var color = Cesium.Color.fromHsl((0.6 - (height * 0.1)), 1.0, 0.5);
-        var surfacePosition = Cesium.Cartesian3.fromDegrees(longitude, latitude, 0);
-        var heightPosition = Cesium.Cartesian3.fromDegrees(longitude, latitude, height * 150000);
+        var surfacePosition = Cesium.Cartesian3.fromDegrees(point.long, point.lat, 0);
+        var heightPosition = Cesium.Cartesian3.fromDegrees(point.long, point.lat, point.value * 150000);
 
         //WebGL Globe only contains lines, so that's the only graphics we create.
         var polyline = new Cesium.PolylineGraphics();
@@ -32,46 +27,29 @@ function getGraphEntities(coordinates) {
             show : true,
             polyline : polyline,
         });
-
-        //Add the entity to the collection.
-        //entities.add(entity);
-        entityArr.push(entity);
-    }
-    return entityArr;
+        return entity;
+    })
 }
 
-function getHeatEntities(coordinates) {
-  var entityArr = []
-  for (var i = 0; i < coordinates.length; i += 3) {
-      var latitude = coordinates[i];
-      var longitude = coordinates[i + 1];
-      var height = coordinates[i + 2];
-
-      //Ignore lines of zero height.
-      if(height === 0) {
-          continue;
-      }
-
+function getHeatEntities(data) {
+  return data.map((point) => {
       var ellipse = new Cesium.EllipseGraphics({
-            semiMinorAxis : 10000,
-            semiMajorAxis : 10000,
-            material : Cesium.Color.fromHsl(0.6 * (1.0 - height), 1.0, 0.5, 0.5)
+            semiMinorAxis : 6000 * point.value,
+            semiMajorAxis : 6000 * point.value,
+            material : Cesium.Color.fromHsl(0.6 * (1.0 - point.value), 1.0, 0.5, 0.8)
       })
 
       //The polyline instance itself needs to be on an entity.
       var entity = new Cesium.Entity({
           show : true,
           ellipse : ellipse,
-          position : new Cesium.Cartesian3.fromDegrees(longitude, latitude),
+          position : new Cesium.Cartesian3.fromDegrees(point.long, point.lat),
       });
-
-      //Add the entity to the collection.
-      entityArr.push(entity);
-  }
-  return entityArr;
+      return entity;
+  })
 }
 
-function ApiDataSource(api, visualisation) {
+function ApiDataSource(api, visualisation, options) {
   this._name = 'dataSource';
   this._changed = new CesiumEvent();
   this._error = new CesiumEvent();
@@ -82,14 +60,14 @@ function ApiDataSource(api, visualisation) {
   this._seriesToDisplay = undefined;
   this._heightScale = 150000;
   this._entityCluster = new EntityCluster();
-  this.graphVisualisation = visualisation;//getHeatEntities;//getGraphEntities;
+  this.options = options;
+  this.graphVisualisation = visualisation;
   this.update = function (time) {
     var start = moment(time.toString());
-    var quaters = Math.round(start.minutes() / 15);
-    var datestr = start.set('minutes', quaters * 15).format('YYYY-MM-DD/HH-mm');
+    var quarters = Math.round(start.minutes() / 15);
+    var datestr = start.set('minutes', quarters * 15).format('YYYY-MM-DD/HH-mm');
     if (this.currentUrl !== datestr) {
       this.currentUrl = datestr;
-      //return this.loadUrl(`http://192.168.1.131:3000/api/globe/readings/${datestr}`)
       return this.loadUrl(api(datestr))
        .then(() => true);
     }
@@ -259,9 +237,9 @@ Object.defineProperties(ApiDataSource.prototype, {
 
 
 /**
- * Asynchronously loads the GeoJSON at the provided url, replacing any existing data.
+ * Asynchronously loads the JSON at the provided url, replacing any existing data.
  * @param {Object} url The url to be processed.
- * @returns {Promise} a promise that will resolve when the GeoJSON is loaded.
+ * @returns {Promise} a promise that will resolve when the JSON is loaded.
  */
 ApiDataSource.prototype.loadUrl = function(url) {
     if (!Cesium.defined(url)) {
