@@ -11,3 +11,5 @@ npm start
 ```
 
 You should then be able to view a Cesium globe at [http://localhost:8080](http://localhost:8080)
+
+Video Demo available [here](https://www.youtube.com/watch?v=OlhanZ-YviU)
