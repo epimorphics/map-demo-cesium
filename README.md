@@ -1,7 +1,9 @@
-# cesium-webpack
-A minimal template project for running Cesium from NPM using webpack.  This has been adapted from [cesium-webpack](https://github.com/mmacaula/cesium-webpack).
+Fork of [cesium-webpack](https://github.com/PropellerAero/cesium-webpack).
+To display Epimorphics data in two different visualisations on a cesium glob
 
-## Up and running
+## Setup and run
+
+Ensure you already have [map-demo-database](https://github.com/epimorphics/map-demo-database) installed, then.
 
 ```
 npm install
