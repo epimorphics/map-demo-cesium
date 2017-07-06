@@ -23,6 +23,9 @@
     "url": "https://github.com/PropellerAero/cesium-webpack.git"
   },
   "devDependencies": {
+    "eslint": "^3.19.0",
+    "eslint-config-airbnb-base": "^11.2.0",
+    "eslint-plugin-import": "^2.7.0",
     "webpack": "^1.13.2",
     "webpack-dev-server": "^1.16.2"
   }
